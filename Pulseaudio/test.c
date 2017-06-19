@@ -67,7 +67,7 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   assert(length > 0);
   assert(length % sizeof(float) == 0);
   v = ((const float*) data)[length / sizeof(float) -1];
-  k = (((float)v * 100) / (float)100) * 10;
+  k = (((float)v * 100) / (float)100) * 30;
   if (k != hist) {
 	sendVol(k);
 	printf("%i\n", k);
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 
   // Connect the stream to record and start reading volume
   pa_stream_set_read_callback(recordstream, stream_read_cb, NULL);
-  r = pa_stream_connect_record(recordstream, NULL, NULL, flags);
+  r = pa_stream_connect_record(recordstream, "lowpassMonitor.monitor", NULL, flags);
   if (r < 0) {
     printf("pa_stream_connect_record failed\n");
     retval = -1;
