@@ -19,10 +19,11 @@ const float alpha = 1.0 - expf((-2.0 * M_PI) / (10 * 50)), ledAmount = 60.0;
 int sockfd, portno, n;
 struct sockaddr_in serv_addr;
 struct hostent *server;
-_Bool threadRun = 0;
+char message [5];
+_Bool threadRun = 0, looping = 1;
 
 // Declare thread variable for the decay thread
-pthread_t tid;
+pthread_t tid, tid2;
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
@@ -53,12 +54,72 @@ void sendVol(int v) {
   char numb[20];
   // convert int to char
   sprintf(numb, "%d", v);
+  numb[strlen(numb)] = '\n'; 
   write(sockfd,numb,strlen(numb));
+}
+
+void* readData() {
+  int socket_desc , client_sock , c , read_size;
+	struct sockaddr_in server , client;
+	char client_message[2000];
+	
+	//Create socket
+	socket_desc = socket(AF_INET , SOCK_STREAM , 0);
+	if (socket_desc == -1)
+	{
+		printf("Could not create socket");
+	}
+	puts("Socket created");
+	
+	//Prepare the sockaddr_in structure
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons( 3000 );
+	
+	//Bind
+	if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
+	{
+		//print the error message
+		perror("bind failed. Error");
+	}
+	puts("bind done");
+	
+	//Listen
+	listen(socket_desc , 3);
+	
+	//Accept and incoming connection
+	puts("Waiting for incoming connections...");
+	c = sizeof(struct sockaddr_in);
+	
+	//accept connection from an incoming client
+	client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c);
+	if (client_sock < 0)
+	{
+		perror("accept failed");
+	}
+	puts("Connection accepted");
+	
+	//Receive a message from client
+	while( (read_size = recv(client_sock , client_message , 2000 , 0)) > 0 )
+	{
+		
+	}
+	
+	if(read_size == 0)
+	{
+		puts("Client disconnected");
+		fflush(stdout);
+	}
+	else if(read_size == -1)
+	{
+		perror("recv failed");
+	}
 }
 
 void* decay() {
   // Set the thread as running
   threadRun = 1;
+  char numb[20];
   while (peak > 0) {
     peak--;
     sendVol(peak);
@@ -74,8 +135,8 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   float v;
   int k;
   if (pa_stream_peek(s, &data, &length) < 0) {
-	printf("%s", "Shit not reading");
-	return;
+    printf("%s", "Shit not reading");
+    return;
   }
   if (!data) {
 	  if (length)
@@ -105,7 +166,7 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
 	  peak = k; //sendVol(k);
   	// Launch decay thread
 	  pthread_create(&tid, NULL, &decay, NULL);
-	  printf("%i\n", k);
+	  //printf("%i\n", k);
   }
   pa_stream_drop(s);
 }
@@ -120,7 +181,7 @@ int main(int argc, char *argv[]) {
   const char device[] = "lowpassMonitor.monitor"; 
 
   // Create a client connection to socket server
-  portno = atoi("30000");
+  portno = atoi("3000");
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   server = gethostbyname("littlealtar");
   if (server == NULL) {
@@ -183,7 +244,7 @@ int main(int argc, char *argv[]) {
     retval = -1;
     goto exit;
   }
-
+  //pthread_create(&tid2, NULL, &readData, NULL);
   // Run the mainloop until pa_mainloop_quit() is called
   // (this example never calls it, so the mainloop runs forever).
   // printf("%s", "Running Loop");
