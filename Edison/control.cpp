@@ -33,6 +33,7 @@ int main(int argc , char *argv[])
     mraa_uart_set_baudrate(uart, 115200);
      
     char buffer[1025];  //data buffer of 1K
+    char msg[30];
      
     //set of socket descriptors
     fd_set readfds;
@@ -165,17 +166,31 @@ int main(int argc , char *argv[])
                     //set the string terminating NULL byte on the end of the data read
                     buffer[valread] = '\0';
                     printf("%s", buffer);
+                    if (buffer[0] == 'P') {
+                      bzero(msg, 30);
+                      strncpy(msg, buffer, strlen(buffer));
+                      running = 0;
+                    }
                     mraa_uart_write(uart, buffer, strlen(buffer));
-                    if (!isdigit(buffer[0])) running = 0;
+                    if (buffer[0] == 'C' || buffer[0] == 'S') {
+                      bzero(msg, 30);
+                      strncpy(msg, buffer, strlen(buffer));
+                      sd = client_socket[0];
+                      //send(sd, msg, strlen(msg), 0);
+                      close(sd);
+                      client_socket[0] = 0;
+                      sleep(2);
+                      mraa_uart_write(uart, msg, strlen(msg));
+                    }
                 }
             }
          }
       }
-      else {
-        mraa_uart_write(uart, buffer, strlen(buffer));
-        sleep(2);
-        running = 1;
-      }
+        else {
+          mraa_uart_write(uart, msg, strlen(msg));
+          sleep(2);
+          running = 1;
+        }
     }
      
     return 0;
