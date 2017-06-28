@@ -8,9 +8,10 @@
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-void showVUone(int k);
-void showVUtwo(int k);
-void showVUthree(int k);
+void showVUone(int k, byte val[3][3]);
+void showVUtwo(int k, byte val[3][3]);
+void showVUthree(int k, byte val[3][3]);
+void showVUfour(int k, byte val[3][3]);
 void musicMode();
 void readColors(byte val[3][3]);
 
@@ -21,8 +22,6 @@ void setup() {
   // Init LEDs
   FastLED.addLeds<CHIPSET, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);
-  //showVUone(1);
-  //readColors(NULL);
 }
 void loop() {
   int k;
@@ -42,7 +41,12 @@ void loop() {
 void musicMode() {
   byte k, val[3][3];
   char c;
-  while (c != 'C') {
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++) {
+      val[i][j] = 0;
+    }
+  
+  while (c != 'S') {
     Serial.println("shit woks");
     while(c != 'P') {
       Serial.println("stuck");
@@ -55,20 +59,31 @@ void musicMode() {
       if (Serial.available()) {
         l = Serial.peek();
         if (l == 80) break;
-        if (l == 67) readColors(val);
-        l = Serial.parseInt();
+        if (l == 67) {readColors(val); Serial.println("starting read func");}
+        if (l == 83) break;
+        else l = Serial.parseInt();
       }
       if (l > 0 && l <= 30)
         switch(k) {
             case 0:
-                showVUone(l);
+            {
+                showVUone(l, val);
+            }
                 break;
             case 1:
-                showVUtwo(l);
+            {
+                showVUtwo(l, val);
+            }
                 break;
             case 2:
-                showVUthree(l);
+            {
+                showVUthree(l, val);
+            }
                 break;
+            case 3:
+            {
+              showVUfour(l, val);
+            }
             default:
                 Serial.println("Faulty input");
                 break;
@@ -79,71 +94,6 @@ void musicMode() {
 }
 }
 
-/*
-void musicMode() {
-  int k;
-  char c;
-  byte val[3][3];
-  while (c != 'C') {
-    Serial.println("shit woks");
-    while(c != 'P') {
-      Serial.println("stuck");
-      if (Serial.available())
-        c = (char)Serial.read();
-    }
-    k = Serial.parseInt();
-    switch(k) {
-      case 0:
-      {
-        Serial.println("one");
-        while (true) {
-          if (Serial.available()) {
-          k = Serial.peek();
-          if (k == 80) break;
-          if (k == 67) readColors(val);
-          k = Serial.parseInt();
-          if (k > 0 && k <= 30)
-            showVUone(k);
-          }
-        }
-      }
-      break;
-      case 1:
-      {
-        Serial.println("two");
-        while (true) {
-          if (Serial.available()) {
-          k = Serial.peek();
-          if (k == 80) break;
-          k = Serial.parseInt();
-          Serial.println(k);
-          }
-          if (k > 0 && k <= 30)
-            showVUtwo(k);
-        }
-      }
-      break;
-      case 2:
-      {
-        Serial.println("three");
-        while (true) {
-          if (Serial.available()) {
-          k = Serial.peek();
-          if (k == 80) break;
-          k = Serial.parseInt();
-          Serial.println(k);
-          if (k > 0 && k <= 30)
-            showVUthree(k);
-          }
-        }
-      }
-      break;
-    }
-    c = (char)Serial.read();
-  }
-}
-*/
-
 void readColors(byte val[3][3]) {
   Serial.read();
   for (int i = 0; i < 3; i++)
@@ -153,70 +103,136 @@ void readColors(byte val[3][3]) {
     }
 }
 
-// Pattern from sides to center
-void showVUone(int k) {
-  int r = 0, g = 255, b = 0;
-  for (int i = k; i < NUM_LEDS - 30; i++)
-    leds[i] = CRGB::Black;
-  for (int i = 0; i < k; i++) {
+
+void showVUone(int k, byte val[3][3]) {
+  //Serial.println("one");
+  int r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  bool rop = (bool)val[0][2], gop = (bool)val[1][2], bop = (bool)val[2][2];
+  for (int i = NUM_LEDS - 1; i > NUM_LEDS - 1 - (k * 2); i--) {
     leds[i].setRGB(r, g, b);
-    r += 15;
-    g -= 25;
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
     if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
     if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
   }
-  FastLED.show();
-  r = 0;
-  g = 255; 
-  for (int i = NUM_LEDS; i > NUM_LEDS - k - 1; i--) {
-    leds[i].setRGB(r, g, b);
-    r += 15;
-    g -= 25;
-    if (r > 255) r = 255;
-    if (g < 0) g = 0;
-  }
-  for (int i = NUM_LEDS - k - 1; i > NUM_LEDS - 30; i--)
+  for (int i = 0; i < NUM_LEDS - 1 - (k * 2); i++)
     leds[i] = CRGB::Black;
   FastLED.show();
 }
 
 // Patern from center to sides
-void showVUtwo(int k) {
-  int r = 0, g = 255, b = 0;
+void showVUthree(int k, byte val[3][3]) {
+  //Serial.println("two");
+  int r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  bool rop = (bool)val[0][2], gop = (bool)val[1][2], bop = (bool)val[2][2];
   for (int i = NUM_LEDS/2 - k; i >= 0; i--)
     leds[i] = CRGB::Black;
   for (int i = NUM_LEDS/2; i >= NUM_LEDS/2 - k - 1; i--) {
     leds[i].setRGB(r, g, b);
-    r += 15;
-    g -= 25;
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
     if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
     if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
   }
-  FastLED.show();
-  r = 0;
-  g = 255; 
-  for (int i = NUM_LEDS/2; i <= NUM_LEDS/2 + k + 1; i++) {
+  //FastLED.show();
+  r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  for (int i = NUM_LEDS/2; i <= NUM_LEDS/2 + k - 1; i++) {
     leds[i].setRGB(r, g, b);
-    r += 15;
-    g -= 25;
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
     if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
     if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
   }
-  for (int i = NUM_LEDS/2 + k; i <= NUM_LEDS; i++)
+  for (int i = NUM_LEDS/2 + k - 1; i < NUM_LEDS; i++)
     leds[i] = CRGB::Black;
   FastLED.show();
 }
 
-void showVUthree(int k) {
-  int r = 0, g = 255, b = 0;
+void showVUtwo(int k, byte val[3][3]) {
+  //Serial.println("three");
+  int r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  bool rop = (bool)val[0][2], gop = (bool)val[1][2], bop = (bool)val[2][2];
   for (int i = 0; i < k * 2; i++) {
     leds[i].setRGB(r, g, b);
-    r += 15;
-    g -= 15;
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
     if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
     if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
   }
   for (int i = k * 2; i < NUM_LEDS; i++)
+    leds[i] = CRGB::Black;
+  FastLED.show();
+}
+
+void showVUfour(int k, byte val[3][3]) {
+  int r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  bool rop = (bool)val[0][2], gop = (bool)val[1][2], bop = (bool)val[2][2];
+  for (int i = k; i < NUM_LEDS - 30; i++)
+    leds[i] = CRGB::Black;
+  for (int i = 0; i < k; i++) {
+    leds[i].setRGB(r, g, b);
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
+    if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
+    if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
+  }
+  r = val[0][0], rd = val[0][1], g = val[1][0], gd = val[1][1], b = val[2][0], bd = val[2][1];
+  for (int i = NUM_LEDS - 1; i > NUM_LEDS - k - 1; i--) {
+    leds[i].setRGB(r, g, b);
+    if (rop == 1) r += rd;
+    else if (rop == 0) r -= rd;
+    if (gop == 1) g += gd;
+    else if (gop == 0) g -= gd;
+    if (bop == 1) b += bd;
+    else if (bop == 0) b -= bd;
+    if (r > 255) r = 255;
+    if (r < 0) r = 0;
+    if (g > 255) g = 255;
+    if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    if (b < 0) b = 0;
+  }
+  for (int i = NUM_LEDS - k - 1; i > NUM_LEDS - 30; i--)
     leds[i] = CRGB::Black;
   FastLED.show();
 }

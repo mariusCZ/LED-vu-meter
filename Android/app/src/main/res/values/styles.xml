@@ -9,8 +9,9 @@
     </style>
 
     <string-array name="choices">
-        <item>Pattern 1</item>
-        <item>Pattern 2</item>
-        <item>Pattern 3</item>
+        <item>From right to left</item>
+        <item>From left to right</item>
+        <item>From center to sides</item>
+        <item>From sides to center</item>
     </string-array>
 </resources>

@@ -8,7 +8,8 @@ import android.view.View;
 //import static com.example.marius.test.R.id.button3;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void musicMode(View view) {
+        //mClient.run();
         Intent intent = new Intent(this, MusicMode.class);
         startActivity(intent);
     }

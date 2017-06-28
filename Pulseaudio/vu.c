@@ -11,6 +11,9 @@
 #include <netdb.h>
 #include <pulse/pulseaudio.h>
 
+void sendVol(int v);
+void connectSocket();
+void* decay();
 
 static pa_sample_spec ss;
 int peak = 0;
@@ -23,7 +26,7 @@ char message [5];
 _Bool threadRun = 0, looping = 1;
 
 // Declare thread variable for the decay thread
-pthread_t tid, tid2;
+pthread_t tid; 
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
@@ -52,68 +55,14 @@ void pa_state_cb(pa_context *c, void *userdata) {
 // Function to send volume to socket
 void sendVol(int v) {
   char numb[20];
-  // convert int to char
+  int n;
+  // convert int to char 
   sprintf(numb, "%d", v);
+  printf("%s\n" ,numb);
   numb[strlen(numb)] = '\n'; 
-  write(sockfd,numb,strlen(numb));
-}
-
-void* readData() {
-  int socket_desc , client_sock , c , read_size;
-	struct sockaddr_in server , client;
-	char client_message[2000];
-	
-	//Create socket
-	socket_desc = socket(AF_INET , SOCK_STREAM , 0);
-	if (socket_desc == -1)
-	{
-		printf("Could not create socket");
-	}
-	puts("Socket created");
-	
-	//Prepare the sockaddr_in structure
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons( 3000 );
-	
-	//Bind
-	if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
-	{
-		//print the error message
-		perror("bind failed. Error");
-	}
-	puts("bind done");
-	
-	//Listen
-	listen(socket_desc , 3);
-	
-	//Accept and incoming connection
-	puts("Waiting for incoming connections...");
-	c = sizeof(struct sockaddr_in);
-	
-	//accept connection from an incoming client
-	client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c);
-	if (client_sock < 0)
-	{
-		perror("accept failed");
-	}
-	puts("Connection accepted");
-	
-	//Receive a message from client
-	while( (read_size = recv(client_sock , client_message , 2000 , 0)) > 0 )
-	{
-		
-	}
-	
-	if(read_size == 0)
-	{
-		puts("Client disconnected");
-		fflush(stdout);
-	}
-	else if(read_size == -1)
-	{
-		perror("recv failed");
-	}
+  if (n = send(sockfd,numb,strlen(numb), MSG_NOSIGNAL) == -1) {
+    looping = 0;
+  }
 }
 
 void* decay() {
@@ -122,12 +71,33 @@ void* decay() {
   char numb[20];
   while (peak > 0) {
     peak--;
-    sendVol(peak);
+    if (looping)
+      sendVol(peak);
     usleep(25000);
   }
   threadRun = 0;
 }
 
+void connectSocket () {
+  // Create a client connection to socket server
+  portno = atoi("3000");
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  server = gethostbyname("littlealtar");
+  if (server == NULL) {
+    fprintf(stderr,"ERROR, no such host\n");
+    exit(0);
+  }
+  // Literally no idea what this does
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy((char *)server->h_addr, 
+    (char *)&serv_addr.sin_addr.s_addr,
+    server->h_length);
+  serv_addr.sin_port = htons(portno);
+  if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
+	  printf("%s", "SHIT IS BROKEN DAWG");
+  looping = 1;
+}
 
 // Function to read the volume
 static void stream_read_cb(pa_stream *s, size_t length, void *userdata) { 
@@ -158,8 +128,9 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   // Rounding the values
   if (avg - (int)avg > 0.5) k = avg + 1;
   else k = avg;
+  printf("%d\n", k);
   // If conditions met, send data to controller
-  if (k >= peak) {
+  if (k >= peak && looping) {
     // Check if thread is running, if running, kill it
 	  if (threadRun)
 	    pthread_cancel(tid);
@@ -167,6 +138,14 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   	// Launch decay thread
 	  pthread_create(&tid, NULL, &decay, NULL);
 	  //printf("%i\n", k);
+  }
+  else if (!looping) {
+    pa_stream_cork(s, 1, NULL, &data);
+    pa_stream_flush(s, NULL, &data);
+    usleep(10000);
+    connectSocket();
+    sleep(5);
+    pa_stream_cork(s, 0, NULL, &data);
   }
   pa_stream_drop(s);
 }
@@ -180,23 +159,9 @@ int main(int argc, char *argv[]) {
   int r, pa_ready = 0, retval = 0;
   const char device[] = "lowpassMonitor.monitor"; 
 
-  // Create a client connection to socket server
-  portno = atoi("3000");
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  server = gethostbyname("littlealtar");
-  if (server == NULL) {
-    fprintf(stderr,"ERROR, no such host\n");
-    exit(0);
-  }
-  // Literally no idea what this does
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr, 
-    (char *)&serv_addr.sin_addr.s_addr,
-    server->h_length);
-  serv_addr.sin_port = htons(portno);
-  if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
-	  printf("%s", "SHIT IS BROKEN DAWG");
+  // Connect to socket
+  connectSocket();
+
   // Create a mainloop API and connection to the default server
   pa_ml = pa_mainloop_new();
   pa_mlapi = pa_mainloop_get_api(pa_ml);
@@ -244,7 +209,7 @@ int main(int argc, char *argv[]) {
     retval = -1;
     goto exit;
   }
-  //pthread_create(&tid2, NULL, &readData, NULL);
+
   // Run the mainloop until pa_mainloop_quit() is called
   // (this example never calls it, so the mainloop runs forever).
   // printf("%s", "Running Loop");
