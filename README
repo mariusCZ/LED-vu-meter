@@ -2,8 +2,8 @@ This is still a heavy work in progress. It'll take months.
 
 Current features working:
 Music sync (buggy, but not too badly and a bit hacky)
-Manual control (super buggy, mostly since Intel Edison has a slow internet connection and because of that sockets behave weird, will move TCP socket server onto PC
-later on)
+Manual control (super buggy, mostly since Intel Edison has a slow internet connection and because of that sockets behave weird, 
+will move TCP socket server onto PC later on)
 
 On the way:
 Patterns (Already got UI implemented)
