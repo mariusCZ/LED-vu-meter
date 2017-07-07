@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+#include <netinet/tcp.h>
  
 #define TRUE   1
 #define FALSE  0
@@ -28,11 +29,13 @@ int main(int argc , char *argv[])
     int master_socket , addrlen , new_socket , client_socket[30] , max_clients = 30 , activity, i , valread , sd;
 	int max_sd;
     struct sockaddr_in address;
+    char buffer[1025]; 
+    char androidIP[] = "192.168.1.66";
     mraa_uart_context uart;
     uart = mraa_uart_init(0);
     mraa_uart_set_baudrate(uart, 115200);
      
-    char buffer[1025];  //data buffer of 1K
+ //data buffer of 1K
     char msg[30];
      
     //set of socket descriptors
@@ -53,6 +56,12 @@ int main(int argc , char *argv[])
  
     //set master socket to allow multiple connections , this is just a good habit, it will work without this
     if( setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )
+    {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    if( setsockopt(master_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&opt, sizeof(opt)) < 0 )
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -127,17 +136,23 @@ int main(int argc , char *argv[])
             //inform user of socket number - used in send and receive commands
             printf("New connection , socket fd is %d , ip is : %s , port : %d \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
        
+            if (strcmp(inet_ntoa(address.sin_addr), "192.168.1.66") == 0) {
+              client_socket[1] = new_socket;
+              printf("GOTEM");
+            }
+            else {
             //add new socket to array of sockets
-            for (i = 0; i < max_clients; i++) 
-            {
-                //if position is empty
-				if( client_socket[i] == 0 )
-                {
-                    client_socket[i] = new_socket;
-                    printf("Adding to list of sockets as %d\n" , i);
-					
-					break;
-                }
+              for (i = 0; i < max_clients; i++) 
+              {
+                  //if position is empty
+          if( client_socket[i] == 0 )
+                  {
+                      client_socket[i] = new_socket;
+                      printf("Adding to list of sockets as %d\n" , i);
+            
+            break;
+                  }
+              }
             }
         }
          
@@ -161,18 +176,20 @@ int main(int argc , char *argv[])
                 }
 
                 //Echo back the message that came in
-                if (valread != 0)
+                else
                 {
                     //set the string terminating NULL byte on the end of the data read
                     buffer[valread] = '\0';
                     printf("%s", buffer);
+                    /*
                     if (buffer[0] == 'P') {
                       bzero(msg, 30);
                       strncpy(msg, buffer, strlen(buffer));
                       running = 0;
                     }
+                    */
                     mraa_uart_write(uart, buffer, strlen(buffer));
-                    if (buffer[0] == 'C' || buffer[0] == 'S') {
+                    if (buffer[0] == 'C' || buffer[0] == 'S' || buffer[0] == 'P') {
                       bzero(msg, 30);
                       strncpy(msg, buffer, strlen(buffer));
                       sd = client_socket[0];
@@ -182,6 +199,7 @@ int main(int argc , char *argv[])
                       sleep(2);
                       mraa_uart_write(uart, msg, strlen(msg));
                     }
+                    //bzero(buffer, sizeof(buffer));
                 }
             }
          }

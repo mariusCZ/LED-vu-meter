@@ -1,34 +1,38 @@
 package com.example.marius.test;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 
-//import static com.example.marius.test.R.id.button3;
+public class MainActivity extends FragmentActivity {
+    private SectionsPagerAdapter mSectionsPagerAdapter;
 
-public class MainActivity extends AppCompatActivity {
+    public static SocketClient client = new SocketClient("192.168.1.96", 3000);
 
+    private ViewPager mViewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = findViewById(R.id.container);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
     }
 
+    @Override
+    protected void onStart () {
+        client.connect();
+        super.onStart();
+    }
 
-    public void musicMode(View view) {
-        //mClient.run();
-        Intent intent = new Intent(this, MusicMode.class);
-        startActivity(intent);
+    @Override
+    protected void onPause () {
+        client.disconnect();
+        super.onPause();
     }
-    public void manualControl(View view) {
-        Intent intent = new Intent(this, ManualControl.class);
-        startActivity(intent);
-    }
-    public void patterns(View view) {
-        Intent intent = new Intent(this, Patterns.class);
-        startActivity(intent);
-    }
+
 }
 

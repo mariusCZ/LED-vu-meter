@@ -8,12 +8,16 @@
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
+// Music mode functions
 void showVUone(int k, byte val[3][3]);
 void showVUtwo(int k, byte val[3][3]);
 void showVUthree(int k, byte val[3][3]);
 void showVUfour(int k, byte val[3][3]);
-void musicMode();
 void readColors(byte val[3][3]);
+void musicMode();
+// Manual control
+void manualControl();
+void turnLED(unsigned long color, int minVal, int maxVal);
 
 void setup() {
   // Init serial
@@ -29,11 +33,14 @@ void loop() {
   if (Serial.available()) {
     k = Serial.read();
   }
-  Serial.println("shit");
+  //manualControl();
   // If data legit, light up the LEDs
   switch(k) {
     case 'm':
     musicMode();
+    break;
+    case 'M':
+    manualControl();
     break;
   }
 }
@@ -47,9 +54,7 @@ void musicMode() {
     }
   
   while (c != 'S') {
-    Serial.println("shit woks");
     while(c != 'P') {
-      Serial.println("stuck");
       c = (char)Serial.read();
     }
     k = Serial.parseInt();
@@ -59,7 +64,7 @@ void musicMode() {
       if (Serial.available()) {
         l = Serial.peek();
         if (l == 80) break;
-        if (l == 67) {readColors(val); Serial.println("starting read func");}
+        if (l == 67) readColors(val);
         if (l == 83) break;
         else l = Serial.parseInt();
       }
@@ -85,13 +90,51 @@ void musicMode() {
               showVUfour(l, val);
             }
             default:
-                Serial.println("Faulty input");
                 break;
         }
   }
   c = (char)Serial.read();
-  Serial.println("sometin wong");
+  }
 }
+
+void manualControl() {
+  unsigned long color = 0xff0000;
+  int minVal, maxVal;
+  while(true) {
+    //Serial.println("manual works");
+    char c = '\0';
+    if (Serial.available() > 0) {
+      c = Serial.read();
+    }
+    if (c == 's') break;
+    switch(c) {
+      case 'L':
+      {
+        minVal = Serial.parseInt();
+        maxVal = Serial.parseInt();
+        Serial.println("yo");
+        turnLED(color, minVal, maxVal);
+      }
+      break;
+      case 'H':
+      {
+        String hex = Serial.readStringUntil('\n');
+        const char *conv = hex.c_str();
+        color = strtol(conv, NULL, 16);
+        turnLED(color, minVal, maxVal);
+      }
+    }
+  }
+}
+
+void turnLED(unsigned long color, int minVal, int maxVal) {
+  for (int i = 0; i < NUM_LEDS; i++)
+    leds[i] = CRGB::Black;
+  Serial.println(minVal);
+  Serial.println(maxVal);
+  for (int i = minVal; i <= maxVal; i++)
+    leds[i] = color;
+  FastLED.show();
 }
 
 void readColors(byte val[3][3]) {
