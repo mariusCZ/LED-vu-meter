@@ -1,3 +1,15 @@
-This is still a heavy work in progress. It'll take a month, if not more.
+This is still a heavy work in progress. It'll take months.
+
+Current features working:
+Music sync (buggy, but not too badly and a bit hacky)
+Manual control (super buggy, mostly since Intel Edison has a slow internet connection and because of that sockets behave weird, 
+will move TCP socket server onto PC later on)
+
+On the way:
+Patterns (Already got UI implemented)
+Proper settings
+GUI on PC to control the LEDs
+Proper installation
+A script/program that launches everything properly
 
 Uploaded for backup and sharing purposes.
