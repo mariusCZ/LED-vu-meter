@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import static com.example.marius.test.MainActivity.client;
 
@@ -24,7 +23,7 @@ public class Patterns extends Fragment {
                             Bundle savedInstanceState) {
 
         final View Patterns = inflater.inflate(R.layout.activity_patterns, container, false);
-        String[] myItems = new String[]{"Rainbow", "Confetti", "Cylon", "Juggle", "Mood Light", "Rain", "Manual Control"};
+        String[] myItems = new String[]{"Rainbow", "Confetti", "Cylon", "Juggle", "Mood Light", "Rain"};
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String> (getContext(),  R.layout.list, myItems);
 
@@ -34,8 +33,8 @@ public class Patterns extends Fragment {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View viewClicked, int position, long id) {
-                // TODO Auto-generated method stub
-                Toast.makeText(getContext(), String.valueOf(position), Toast.LENGTH_SHORT).show();
+                String ptrn = "R" + toString().valueOf(position) + '\n';
+                client.send(ptrn);
             }
         });
         return Patterns;

@@ -8,8 +8,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import static com.example.marius.test.MainActivity.client;
-
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     public SectionsPagerAdapter(FragmentManager fm) {
@@ -20,11 +18,11 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int i) {
         switch (i) {
             case 0:
-                return MusicMode.newInstance();
+                return ManualControl.newInstance();
             case 1:
                 return Patterns.newInstance();
             case 2:
-                return ManualControl.newInstance();
+                return MusicMode.newInstance();
         }
         return null;
 

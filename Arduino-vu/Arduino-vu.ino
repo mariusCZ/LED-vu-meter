@@ -16,8 +16,15 @@ void showVUfour(int k, byte val[3][3]);
 void readColors(byte val[3][3]);
 void musicMode();
 // Manual control
-void manualControl();
 void turnLED(unsigned long color, int minVal, int maxVal);
+void rainbow(), confetti(), cylon(), juggle(), mood_light(), rain();
+typedef void (*SimplePatternList[])();
+SimplePatternList Patterns = { rainbow, confetti, cylon, juggle, mood_light, rain };
+byte hue = 0;
+byte pattern;
+unsigned long color = 0xff0000;
+int minVal = 0, maxVal = 59;
+bool state = 0;
 
 void setup() {
   // Init serial
@@ -28,20 +35,50 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
 }
 void loop() {
-  int k;
+  char k;
   // If serial comm is available, read
   if (Serial.available()) {
     k = Serial.read();
+    Serial.println(k);
   }
   //manualControl();
   // If data legit, light up the LEDs
   switch(k) {
+    case 'L':
+    {
+      minVal = Serial.parseInt();
+      maxVal = Serial.parseInt();
+      Serial.println("yo");
+      turnLED(color, minVal, maxVal);
+      state = 0;
+    }
+    break;
+    case 'H':
+    {
+      String hex = Serial.readStringUntil('\n');
+      const char *conv = hex.c_str();
+      color = strtol(conv, NULL, 16);
+      turnLED(color, minVal, maxVal);
+      state = 0;
+    }
+    break;
+    case 'R':
+    {
+      state = 1;
+      pattern = Serial.parseInt();
+    }
+    break;
     case 'm':
-    musicMode();
-    break;
-    case 'M':
-    manualControl();
-    break;
+    {
+      musicMode();
+    }
+      break;
+  }
+  if (state == 1) {
+    Patterns[pattern]();
+    FastLED.delay(1000/120);
+    FastLED.show();
+    EVERY_N_MILLISECONDS( 80 ) { hue++; }
   }
 }
 
@@ -97,36 +134,6 @@ void musicMode() {
   }
 }
 
-void manualControl() {
-  unsigned long color = 0xff0000;
-  int minVal, maxVal;
-  while(true) {
-    //Serial.println("manual works");
-    char c = '\0';
-    if (Serial.available() > 0) {
-      c = Serial.read();
-    }
-    if (c == 's') break;
-    switch(c) {
-      case 'L':
-      {
-        minVal = Serial.parseInt();
-        maxVal = Serial.parseInt();
-        Serial.println("yo");
-        turnLED(color, minVal, maxVal);
-      }
-      break;
-      case 'H':
-      {
-        String hex = Serial.readStringUntil('\n');
-        const char *conv = hex.c_str();
-        color = strtol(conv, NULL, 16);
-        turnLED(color, minVal, maxVal);
-      }
-    }
-  }
-}
-
 void turnLED(unsigned long color, int minVal, int maxVal) {
   for (int i = 0; i < NUM_LEDS; i++)
     leds[i] = CRGB::Black;
@@ -135,6 +142,40 @@ void turnLED(unsigned long color, int minVal, int maxVal) {
   for (int i = minVal; i <= maxVal; i++)
     leds[i] = color;
   FastLED.show();
+}
+
+void rainbow() {
+  fill_rainbow( leds, NUM_LEDS, hue, 4);
+}
+
+void confetti() {
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int pos = random16(NUM_LEDS);
+  leds[pos] += CHSV( hue + random8(64), 200, 255);
+}
+
+void cylon() {
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  int pos = beatsin16(13,0,NUM_LEDS);
+  leds[pos] += CHSV( hue, 255, 192);
+}
+
+void juggle() {
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  byte dothue = 0;
+  for( int i = 0; i < 8; i++) {
+    leds[beatsin16(i+7,0,NUM_LEDS)] |= CHSV(dothue, 200, 255);
+    dothue += 32;
+  }
+}
+
+void mood_light() {
+  for (int i = 0; i < NUM_LEDS; i++)
+    leds[i].setHue(hue);
+}
+
+void rain () {
+  
 }
 
 void readColors(byte val[3][3]) {

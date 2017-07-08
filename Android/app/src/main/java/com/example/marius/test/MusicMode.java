@@ -28,7 +28,6 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
                             Bundle savedInstanceState) {
         View MusicMode = inflater.inflate(R.layout.activity_music_mode, container, false);
         populateSpinner(MusicMode);
-        /*
         final Button button = MusicMode.findViewById(R.id.button2);
         button.setOnClickListener(new View.OnClickListener()
         {
@@ -36,7 +35,7 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
             public void onClick(View v)
             {
                 // do something
-                client.send(toString().button.getTag());
+                client.send("m\n");
             }
         });
         Button button2 = MusicMode.findViewById(R.id.button3);
@@ -45,10 +44,9 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
             @Override
             public void onClick(View v)
             {
-                // do something
+                client.send("S\n");
             }
         });
-        */
 
         Button sendButton = MusicMode.findViewById(R.id.sendButton);
         sendButton.setOnClickListener(new View.OnClickListener()
