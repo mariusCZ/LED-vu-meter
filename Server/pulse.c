@@ -11,18 +11,12 @@
 #include <netdb.h>
 #include <pulse/pulseaudio.h>
 
-void sendVol(int v);
-void connectSocket();
-void* decay();
+#include "pulse.h"
+#include "serial.h"
 
-static pa_sample_spec ss;
 int peak = 0;
-double avg = 1, factor = 0.3, max = 0, min = 1, level = 0;
-const float alpha = 1.0 - expf((-2.0 * M_PI) / (10 * 50)), ledAmount = 60.0;
-int sockfd, portno, n;
-struct sockaddr_in serv_addr;
-struct hostent *server;
-char message [5];
+double avg = 1, max = 0, min = 1, level = 0;
+const float alpha = 1.0 - expf((-2.0 * M_PI) / (10 * 50));
 _Bool threadRun = 0, looping = 1;
 
 // Declare thread variable for the decay thread
@@ -56,12 +50,12 @@ void pa_state_cb(pa_context *c, void *userdata) {
 void sendVol(int v) {
   char numb[20];
   int n;
-  // convert int to char 
-  sprintf(numb, "%d", v);
-  printf("%s\n" ,numb);
-  numb[strlen(numb)] = '\n'; 
-  if (n = send(sockfd,numb,strlen(numb), MSG_NOSIGNAL) == -1) {
-    looping = 0;
+  if (v > 0 && v <= ledAmount) {
+    // convert int to char 
+    sprintf(numb, "%d", v);
+    //printf("%s\n" ,numb);
+    numb[strlen(numb)] = '\n'; 
+    write(fd, numb, strlen(numb));
   }
 }
 
@@ -76,27 +70,6 @@ void* decay() {
     usleep(25000);
   }
   threadRun = 0;
-}
-
-void connectSocket () {
-  // Create a client connection to socket server
-  portno = atoi("3000");
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  server = gethostbyname("littlealtar");
-  if (server == NULL) {
-    fprintf(stderr,"ERROR, no such host\n");
-    exit(0);
-  }
-  // Literally no idea what this does
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr, 
-    (char *)&serv_addr.sin_addr.s_addr,
-    server->h_length);
-  serv_addr.sin_port = htons(portno);
-  if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
-	  printf("%s", "SHIT IS BROKEN DAWG");
-  looping = 1;
 }
 
 // Function to read the volume
@@ -124,13 +97,13 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   if (level < min) min = level;
   avg = max - min;
   // Mapping the volume to LEDs
-  avg = ((v * (float)100) / (float)100) * (ledAmount/2);
+  avg = ((v * (float)100) / (float)100) * (ledAmount/2 + 1);
   // Rounding the values
   if (avg - (int)avg > 0.5) k = avg + 1;
   else k = avg;
-  printf("%d\n", k);
+  //printf("%d\n", peak);
   // If conditions met, send data to controller
-  if (k >= peak && looping) {
+  if (k >= peak) {
     // Check if thread is running, if running, kill it
 	  if (threadRun)
 	    pthread_cancel(tid);
@@ -139,28 +112,16 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
 	  pthread_create(&tid, NULL, &decay, NULL);
 	  //printf("%i\n", k);
   }
-  else if (!looping) {
-    pa_stream_cork(s, 1, NULL, &data);
-    pa_stream_flush(s, NULL, &data);
-    usleep(10000);
-    connectSocket();
-    sleep(5);
-    pa_stream_cork(s, 0, NULL, &data);
-  }
   pa_stream_drop(s);
 }
 
-int main(int argc, char *argv[]) {
-  pa_mainloop *pa_ml;
-  pa_mainloop_api *pa_mlapi;
-  pa_context *pa_ctx;
-  pa_stream *recordstream;
-  pa_stream_flags_t flags;
+void runPulse() {
   int r, pa_ready = 0, retval = 0;
-  const char device[] = "lowpassMonitor.monitor"; 
+  const char device[] = "lowpassMonitor.monitor";
+  char musicMode[] = "m\nP0\nC255\n5\n0\n0\n0\n0\n0\n5\n1\n";
 
-  // Connect to socket
-  connectSocket();
+  // Open serial comm
+  //openComm();
 
   // Create a mainloop API and connection to the default server
   pa_ml = pa_mainloop_new();
@@ -181,6 +142,7 @@ int main(int argc, char *argv[]) {
 
   // We can't do anything until PA is ready, so just iterate the mainloop
   // and continue
+  
   while (pa_ready == 0) {
     printf("%s", "Fix yo shit");
     pa_mainloop_iterate(pa_ml, 1, NULL);
@@ -214,6 +176,7 @@ int main(int argc, char *argv[]) {
   // (this example never calls it, so the mainloop runs forever).
   // printf("%s", "Running Loop");
 
+  //sendSerial(musicMode);
   pa_mainloop_run(pa_ml, NULL);
 
 exit:
@@ -221,5 +184,5 @@ exit:
   pa_context_disconnect(pa_ctx);
   pa_context_unref(pa_ctx);
   pa_mainloop_free(pa_ml);
-  return retval;
+  //return retval;
 }

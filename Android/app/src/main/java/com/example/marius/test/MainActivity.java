@@ -7,7 +7,7 @@ import android.support.v4.view.ViewPager;
 public class MainActivity extends FragmentActivity {
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
-    public static SocketClient client = new SocketClient("192.168.1.96", 3000);
+    public static SocketClient client = new SocketClient("192.168.1.94", 3000);
 
     private ViewPager mViewPager;
 

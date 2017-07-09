@@ -48,7 +48,6 @@ void loop() {
     {
       minVal = Serial.parseInt();
       maxVal = Serial.parseInt();
-      Serial.println("yo");
       turnLED(color, minVal, maxVal);
       state = 0;
     }
@@ -72,7 +71,10 @@ void loop() {
     {
       musicMode();
     }
-      break;
+    break;
+    default:
+      //Serial.println("Shit's broken");
+    break;
   }
   if (state == 1) {
     Patterns[pattern]();
@@ -92,9 +94,10 @@ void musicMode() {
   
   while (c != 'S') {
     while(c != 'P') {
-      c = (char)Serial.read();
+      if (Serial.available())
+        c = (char)Serial.read();
     }
-    k = Serial.parseInt();
+    k = (char)Serial.parseInt();
     
     while (true) {
       byte l;
@@ -103,7 +106,7 @@ void musicMode() {
         if (l == 80) break;
         if (l == 67) readColors(val);
         if (l == 83) break;
-        else l = Serial.parseInt();
+        else l = (char)Serial.parseInt();
       }
       if (l > 0 && l <= 30)
         switch(k) {

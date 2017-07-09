@@ -1,46 +1,31 @@
-/**
-	Handle multiple socket connections with select and fd_set on Linux
-*/
-
-#include "mraa.hpp"
- 
 #include <stdio.h>
-#include <string.h>   //strlen
+#include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <pthread.h>
 #include <errno.h>
-#include <unistd.h>   //close
-#include <arpa/inet.h>    //close
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+#include <sys/time.h>
 #include <netinet/tcp.h>
- 
-#define TRUE   1
-#define FALSE  0
-#define PORT 3000
 
-bool running = 1;
+#include "pulse.h"
+#include "serial.h"
+#include "main.h"
 
-int main(int argc , char *argv[])
-{
+void* tcpServer() {
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] , max_clients = 30 , activity, i , valread , sd;
-	int max_sd;
+	  int max_sd;
     struct sockaddr_in address;
-    char buffer[1025]; 
-    char androidIP[] = "192.168.1.66";
-    mraa_uart_context uart;
-    uart = mraa_uart_init(0);
-    mraa_uart_set_baudrate(uart, 115200);
      
- //data buffer of 1K
-    char msg[30];
+    char buffer[1025];  //data buffer of 1K
      
     //set of socket descriptors
     fd_set readfds;
-     
+ 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++) 
     {
@@ -93,7 +78,6 @@ int main(int argc , char *argv[])
     
 	while(TRUE) 
     {
-      if (running) {
         //clear the socket set
         FD_ZERO(&readfds);
  
@@ -135,24 +119,18 @@ int main(int argc , char *argv[])
          
             //inform user of socket number - used in send and receive commands
             printf("New connection , socket fd is %d , ip is : %s , port : %d \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
-       
-            if (strcmp(inet_ntoa(address.sin_addr), "192.168.1.66") == 0) {
-              client_socket[1] = new_socket;
-              printf("GOTEM");
-            }
-            else {
+
             //add new socket to array of sockets
-              for (i = 0; i < max_clients; i++) 
-              {
-                  //if position is empty
-          if( client_socket[i] == 0 )
-                  {
-                      client_socket[i] = new_socket;
-                      printf("Adding to list of sockets as %d\n" , i);
-            
-            break;
-                  }
-              }
+            for (i = 0; i < max_clients; i++) 
+            {
+                //if position is empty
+				if( client_socket[i] == 0 )
+                {
+                    client_socket[i] = new_socket;
+                    printf("Adding to list of sockets as %d\n" , i);
+					
+					break;
+                }
             }
         }
          
@@ -174,42 +152,57 @@ int main(int argc , char *argv[])
                     close( sd );
                     client_socket[i] = 0;
                 }
-
+                 
                 //Echo back the message that came in
                 else
                 {
                     //set the string terminating NULL byte on the end of the data read
                     buffer[valread] = '\0';
                     printf("%s", buffer);
-                    /*
-                    if (buffer[0] == 'P') {
-                      bzero(msg, 30);
-                      strncpy(msg, buffer, strlen(buffer));
-                      running = 0;
-                    }
-                    */
-                    mraa_uart_write(uart, buffer, strlen(buffer));
-                    if (buffer[0] == 'C' || buffer[0] == 'S' || buffer[0] == 'P') {
-                      bzero(msg, 30);
-                      strncpy(msg, buffer, strlen(buffer));
-                      sd = client_socket[0];
-                      //send(sd, msg, strlen(msg), 0);
-                      close(sd);
-                      client_socket[0] = 0;
+                    //if (buffer[0] == 'L')
+                    if (buffer[0] == 'S') {
+                      pa_mainloop_quit(pa_ml, 0);
+                      run = FALSE;
                       sleep(2);
-                      mraa_uart_write(uart, msg, strlen(msg));
+                      write(fd, buffer, strlen(buffer));
                     }
-                    //bzero(buffer, sizeof(buffer));
+                    if (buffer[0] == 'P' || buffer[0] == 'C') {
+                      if (run) {
+                        pa_mainloop_quit(pa_ml, 0);
+                        run = FALSE;
+                      }
+                      sleep(2);
+                      write(fd, buffer, strlen(buffer));
+                      run = TRUE;
+                    }
+                    write(fd, buffer, strlen(buffer));
+                    if (buffer[0] == 'm') {loop = TRUE; run = TRUE;}
                 }
             }
-         }
-      }
-        else {
-          mraa_uart_write(uart, msg, strlen(msg));
-          sleep(2);
-          running = 1;
         }
     }
      
-    return 0;
-} 
+
+}
+
+int main()
+{
+  pthread_t server;
+  openComm();
+  /*
+  sleep(6);
+  write(fd, m1, strlen(m1));
+  sleep(2);
+  write(fd, m2, strlen(m2));
+  sleep(2);
+  write(fd, m3, strlen(m3));
+  sleep(2);
+  runPulse();
+  */
+  pthread_create(&server, NULL, &tcpServer, NULL);
+  for (;;) {
+    if (run) runPulse();
+    sleep(0.5);
+  }
+  return 0;
+}
