@@ -1,13 +1,13 @@
 This is still a heavy work in progress. It'll take months.
 
 Current features working:
-Music sync (buggy, but not too badly and a bit hacky)
-Manual control (super buggy, mostly since Intel Edison has a slow internet connection and because of that sockets behave weird, 
-will move TCP socket server onto PC later on)
+Music sync (little bugs)
+Manual control (still buggy after moving server to PC, lost a bit on this
+                problem honestly)
 Patterns
+Server on PC
 
 On the way:
-Server on PC instead of Edison
 Proper settings
 GUI on PC to control the LEDs
 Proper installation
