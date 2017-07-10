@@ -15,8 +15,7 @@
 #include "serial.h"
 
 int peak = 0;
-double avg = 1, max = 0, min = 1, level = 0;
-const float alpha = 1.0 - expf((-2.0 * M_PI) / (10 * 50));
+double avg = 1;
 _Bool threadRun = 0, looping = 1;
 
 // Declare thread variable for the decay thread
@@ -65,8 +64,7 @@ void* decay() {
   char numb[20];
   while (peak > 0) {
     peak--;
-    if (looping)
-      sendVol(peak);
+    sendVol(peak);
     usleep(25000);
   }
   threadRun = 0;
@@ -90,24 +88,19 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   assert(length % sizeof(float) == 0);
   // Convert the volume data to a float
   v = ((const float*) data)[length / sizeof(float) -1];
-  // Envelope math
-  level = level + alpha * (v - level);
-  // Measuring the peak
-  if (level > max) max = level;
-  if (level < min) min = level;
-  avg = max - min;
   // Mapping the volume to LEDs
   avg = ((v * (float)100) / (float)100) * (ledAmount/2 + 1);
   // Rounding the values
   if (avg - (int)avg > 0.5) k = avg + 1;
   else k = avg;
-  //printf("%d\n", peak);
+  printf("LEDs in read: %d, level float: %f, peak: %d\n", k, v, peak);
   // If conditions met, send data to controller
   if (k >= peak) {
     // Check if thread is running, if running, kill it
 	  if (threadRun)
 	    pthread_cancel(tid);
-	  peak = k; //sendVol(k);
+    if (k > ledAmount) peak = ledAmount;
+	  else peak = k; //sendVol(k);
   	// Launch decay thread
 	  pthread_create(&tid, NULL, &decay, NULL);
 	  //printf("%i\n", k);
@@ -118,7 +111,6 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
 void runPulse() {
   int r, pa_ready = 0, retval = 0;
   const char device[] = "lowpassMonitor.monitor";
-  char musicMode[] = "m\nP0\nC255\n5\n0\n0\n0\n0\n0\n5\n1\n";
 
   // Open serial comm
   //openComm();

@@ -170,13 +170,13 @@ void* tcpServer() {
                       if (run) {
                         pa_mainloop_quit(pa_ml, 0);
                         run = FALSE;
+                        sleep(2);
+                        write(fd, buffer, strlen(buffer));
+                        run = TRUE;
                       }
-                      sleep(2);
-                      write(fd, buffer, strlen(buffer));
-                      run = TRUE;
                     }
                     write(fd, buffer, strlen(buffer));
-                    if (buffer[0] == 'm') {loop = TRUE; run = TRUE;}
+                    if (buffer[0] == 'm') {run = TRUE;}
                 }
             }
         }
