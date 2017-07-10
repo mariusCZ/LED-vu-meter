@@ -39,7 +39,7 @@ void loop() {
   // If serial comm is available, read
   if (Serial.available()) {
     k = Serial.read();
-    Serial.println(k);
+    //Serial.println(k);
   }
   //manualControl();
   // If data legit, light up the LEDs
@@ -82,6 +82,7 @@ void loop() {
     FastLED.show();
     EVERY_N_MILLISECONDS( 80 ) { hue++; }
   }
+  delay(1);
 }
 
 void musicMode() {
@@ -140,8 +141,6 @@ void musicMode() {
 void turnLED(unsigned long color, int minVal, int maxVal) {
   for (int i = 0; i < NUM_LEDS; i++)
     leds[i] = CRGB::Black;
-  Serial.println(minVal);
-  Serial.println(maxVal);
   for (int i = minVal; i <= maxVal; i++)
     leds[i] = color;
   FastLED.show();
@@ -186,7 +185,6 @@ void readColors(byte val[3][3]) {
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++) {
       val[i][j] = Serial.parseInt();
-      Serial.println(val[i][j]);
     }
 }
 

@@ -49,6 +49,7 @@ void pa_state_cb(pa_context *c, void *userdata) {
 void sendVol(int v) {
   char numb[20];
   int n;
+  if (v > ledAmount / 2) v = ledAmount / 2;
   if (v > 0 && v <= ledAmount) {
     // convert int to char 
     sprintf(numb, "%d", v);
@@ -99,8 +100,7 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
     // Check if thread is running, if running, kill it
 	  if (threadRun)
 	    pthread_cancel(tid);
-    if (k > ledAmount) peak = ledAmount;
-	  else peak = k; //sendVol(k);
+	  peak = k; //sendVol(k);
   	// Launch decay thread
 	  pthread_create(&tid, NULL, &decay, NULL);
 	  //printf("%i\n", k);
