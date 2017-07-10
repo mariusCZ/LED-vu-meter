@@ -9,35 +9,35 @@
 
     <EditText
         android:id="@+id/redDecay"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:ems="10"
         android:inputType="number"
         android:maxLength="3"
-        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintBaseline_toBaselineOf="@+id/greenDecay"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBaseline_toBaselineOf="@+id/greenDecay" />
+        app:layout_constraintRight_toRightOf="parent" />
 
     <EditText
         android:id="@+id/blueDecay"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:ems="10"
         android:inputType="number"
         android:maxLength="3"
-        app:layout_constraintHorizontal_bias="0.971"
+        app:layout_constraintBaseline_toBaselineOf="@+id/greenDecay"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBaseline_toBaselineOf="@+id/greenDecay" />
+        app:layout_constraintRight_toRightOf="parent" />
 
     <EditText
         android:id="@+id/greenDecay"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
@@ -125,7 +125,7 @@
         android:layout_marginTop="8dp"
         android:text="Red"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.132"
+        app:layout_constraintHorizontal_bias="0.07"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -157,7 +157,7 @@
         android:layout_marginTop="8dp"
         android:text="Blue"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.871"
+        app:layout_constraintHorizontal_bias="0.93"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -165,7 +165,7 @@
 
     <EditText
         android:id="@+id/greenVal"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
@@ -180,42 +180,40 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.576"
-        tools:layout_editor_absoluteY="319dp"
-        tools:layout_editor_absoluteX="145dp" />
+        tools:layout_editor_absoluteX="145dp"
+        tools:layout_editor_absoluteY="319dp" />
 
     <EditText
         android:id="@+id/blueVal"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:ems="10"
         android:inputType="number"
         android:maxLength="3"
-        app:layout_constraintHorizontal_bias="0.971"
+        app:layout_constraintBaseline_toBaselineOf="@+id/greenVal"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBaseline_toBaselineOf="@+id/greenVal" />
+        app:layout_constraintRight_toRightOf="parent" />
 
     <EditText
         android:id="@+id/redVal"
-        android:layout_width="110dp"
+        android:layout_width="80dp"
         android:layout_height="42dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:ems="10"
         android:inputType="number"
         android:maxLength="3"
-        app:layout_constraintHorizontal_bias="0.028"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBaseline_toBaselineOf="@+id/greenVal"
-        tools:layout_editor_absoluteY="319dp"
-        tools:layout_editor_absoluteX="10dp" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
 
     <ToggleButton
         android:id="@+id/redToggle"
-        android:layout_width="wrap_content"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
@@ -223,13 +221,13 @@
         android:textOff="Decay"
         android:textOn="Increase"
         app:layout_constraintBaseline_toBaselineOf="@+id/greenToggle"
-        app:layout_constraintHorizontal_bias="0.052"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
     <ToggleButton
         android:id="@+id/greenToggle"
-        android:layout_width="wrap_content"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
@@ -247,7 +245,7 @@
 
     <ToggleButton
         android:id="@+id/blueToggle"
-        android:layout_width="wrap_content"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
@@ -255,7 +253,7 @@
         android:textOff="Decay"
         android:textOn="Increase"
         app:layout_constraintBaseline_toBaselineOf="@+id/greenToggle"
-        app:layout_constraintHorizontal_bias="0.944"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 

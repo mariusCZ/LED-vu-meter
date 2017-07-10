@@ -18,8 +18,7 @@ int peak = 0;
 double avg = 1;
 _Bool threadRun = 0, looping = 1;
 
-// Declare thread variable for the decay thread
-pthread_t tid; 
+pthread_t tid;
 
 // This callback gets called when our context changes state.  We really only
 // care about when it's ready or if it has failed
@@ -49,7 +48,8 @@ void pa_state_cb(pa_context *c, void *userdata) {
 void sendVol(int v) {
   char numb[20];
   int n;
-  if (v > ledAmount / 2) v = ledAmount / 2;
+  // Remove hardcode, this is for debugging
+  if (v > 30) v = 30;
   if (v > 0 && v <= ledAmount) {
     // convert int to char 
     sprintf(numb, "%d", v);
@@ -61,14 +61,17 @@ void sendVol(int v) {
 
 void* decay() {
   // Set the thread as running
-  threadRun = 1;
-  char numb[20];
-  while (peak > 0) {
-    peak--;
-    sendVol(peak);
-    usleep(25000);
-  }
-  threadRun = 0;
+    threadRun = 1;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    while (peak > 0) {
+      // Remove the hardcode, this is for debugging
+      if (peak > 30) peak = 30;
+      peak--;
+      sendVol(peak);
+      usleep(25000);
+    }
+    threadRun = 0;
+    return 0;
 }
 
 // Function to read the volume
@@ -94,12 +97,12 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   // Rounding the values
   if (avg - (int)avg > 0.5) k = avg + 1;
   else k = avg;
-  printf("LEDs in read: %d, level float: %f, peak: %d\n", k, v, peak);
+  printf("LEDs in read: %d, level float: %f, peak: %d, loop: %d\n", k, v, peak, threadRun);
   // If conditions met, send data to controller
   if (k >= peak) {
     // Check if thread is running, if running, kill it
 	  if (threadRun)
-	    pthread_cancel(tid);
+	    pthread_cancel(tid);  
 	  peak = k; //sendVol(k);
   	// Launch decay thread
 	  pthread_create(&tid, NULL, &decay, NULL);
@@ -169,6 +172,7 @@ void runPulse() {
   // printf("%s", "Running Loop");
 
   //sendSerial(musicMode);
+  //pthread_create(&tid, NULL, &decay, NULL);
   pa_mainloop_run(pa_ml, NULL);
 
 exit:

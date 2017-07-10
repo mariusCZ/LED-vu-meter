@@ -34,4 +34,16 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         return 3; //No of Tabs
     }
 
+    @Override
+    public CharSequence getPageTitle(int position) {
+        switch (position) {
+            case 0:
+                return "Manual Control";
+            case 1:
+                return "Patterns";
+            case 2:
+                return "Music Mode";
+        }
+        return null;
+    }
 }
