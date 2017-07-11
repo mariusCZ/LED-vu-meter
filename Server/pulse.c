@@ -61,17 +61,15 @@ void sendVol(int v) {
 
 void* decay() {
   // Set the thread as running
-    threadRun = 1;
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    while (peak > 0) {
+    while (1) {
       // Remove the hardcode, this is for debugging
-      if (peak > 30) peak = 30;
-      peak--;
+      if (peak > 30) 
+        peak = 30;
+      if (peak > 0)
+        peak--;
       sendVol(peak);
-      usleep(25000);
+      usleep(45000);
     }
-    threadRun = 0;
-    return 0;
 }
 
 // Function to read the volume
@@ -101,11 +99,11 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   // If conditions met, send data to controller
   if (k >= peak) {
     // Check if thread is running, if running, kill it
-	  if (threadRun)
-	    pthread_cancel(tid);  
+	  //if (threadRun)
+	    //pthread_cancel(tid);  
 	  peak = k; //sendVol(k);
   	// Launch decay thread
-	  pthread_create(&tid, NULL, &decay, NULL);
+	  //pthread_create(&tid, NULL, &decay, NULL);
 	  //printf("%i\n", k);
   }
   pa_stream_drop(s);
@@ -172,7 +170,8 @@ void runPulse() {
   // printf("%s", "Running Loop");
 
   //sendSerial(musicMode);
-  //pthread_create(&tid, NULL, &decay, NULL);
+  pthread_create(&tid, NULL, &decay, NULL);
+  pthread_detach(tid);
   pa_mainloop_run(pa_ml, NULL);
 
 exit:
