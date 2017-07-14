@@ -1,6 +1,7 @@
 package com.example.marius.test;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,8 @@ import static com.example.marius.test.MainActivity.client;
 //import static com.example.marius.test.MainActivity.client;
 
 public class MusicMode extends Fragment implements AdapterView.OnItemSelectedListener {
+
+    boolean disabled = false;
 
     public static MusicMode newInstance () {
         MusicMode fragment = new MusicMode();
@@ -35,7 +38,7 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
             public void onClick(View v)
             {
                 // do something
-                client.send("m\n");
+                sendVal("m\n");
             }
         });
         Button button2 = MusicMode.findViewById(R.id.button3);
@@ -44,7 +47,7 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
             @Override
             public void onClick(View v)
             {
-                client.send("S\n");
+                sendVal("S\n");
             }
         });
 
@@ -66,7 +69,7 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
                     else message = message + '0' + '\n';
                     i = i + 2;
                 }
-                client.send(message);
+                sendVal(message);
             }
         });
         return MusicMode;
@@ -89,11 +92,24 @@ public class MusicMode extends Fragment implements AdapterView.OnItemSelectedLis
         parent.getItemAtPosition(pos);
         //EditText editText = (EditText) findViewById(R.id.editText);
         String text = "P" + String.valueOf(pos) + '\n';
-        client.send(text);
+        sendVal(text);
     }
 
     public void onNothingSelected(AdapterView<?> parent) {
         // Another interface callback
+    }
+
+    public void sendVal(String message) {
+        if (!disabled) {
+            client.send(message);
+            disabled = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    disabled = false;
+                }
+            }, 2050);
+        }
     }
 
 }

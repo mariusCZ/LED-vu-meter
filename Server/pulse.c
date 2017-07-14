@@ -47,13 +47,9 @@ void pa_state_cb(pa_context *c, void *userdata) {
 // Function to send volume to socket
 void sendVol(int v) {
   char numb[20];
-  int n;
-  // Remove hardcode, this is for debugging
-  if (v > 30) v = 30;
   if (v > 0 && v <= ledAmount) {
     // convert int to char 
     sprintf(numb, "%d", v);
-    //printf("%s\n" ,numb);
     numb[strlen(numb)] = '\n'; 
     write(fd, numb, strlen(numb));
   }
@@ -63,12 +59,12 @@ void* decay() {
   // Set the thread as running
     while (1) {
       // Remove the hardcode, this is for debugging
-      if (peak > 30) 
-        peak = 30;
+      if (peak > ledAmount / 2) 
+        peak = ledAmount / 2;
       if (peak > 0)
         peak--;
       sendVol(peak);
-      usleep(45000);
+      usleep(25000);
     }
 }
 
@@ -97,24 +93,14 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   else k = avg;
   printf("LEDs in read: %d, level float: %f, peak: %d, loop: %d\n", k, v, peak, threadRun);
   // If conditions met, send data to controller
-  if (k >= peak) {
-    // Check if thread is running, if running, kill it
-	  //if (threadRun)
-	    //pthread_cancel(tid);  
-	  peak = k; //sendVol(k);
-  	// Launch decay thread
-	  //pthread_create(&tid, NULL, &decay, NULL);
-	  //printf("%i\n", k);
-  }
+  if (k >= peak)
+	  peak = k;
   pa_stream_drop(s);
 }
 
 void runPulse() {
   int r, pa_ready = 0, retval = 0;
   const char device[] = "lowpassMonitor.monitor";
-
-  // Open serial comm
-  //openComm();
 
   // Create a mainloop API and connection to the default server
   pa_ml = pa_mainloop_new();
@@ -144,7 +130,7 @@ void runPulse() {
   // If there's an error, quit the program
   if (pa_ready == 2) {
     retval = -1;
-    goto exit;
+    //goto exit;
   }
 
   // Create a new stream
@@ -162,22 +148,17 @@ void runPulse() {
   if (r < 0) {
     printf("pa_stream_connect_record failed\n");
     retval = -1;
-    goto exit;
+    //goto exit;
   }
 
   // Run the mainloop until pa_mainloop_quit() is called
   // (this example never calls it, so the mainloop runs forever).
-  // printf("%s", "Running Loop");
 
-  //sendSerial(musicMode);
   pthread_create(&tid, NULL, &decay, NULL);
   pthread_detach(tid);
   pa_mainloop_run(pa_ml, NULL);
-
-exit:
-  // clean up and disconnect
+  pthread_cancel(tid);
   pa_context_disconnect(pa_ctx);
   pa_context_unref(pa_ctx);
   pa_mainloop_free(pa_ml);
-  //return retval;
 }

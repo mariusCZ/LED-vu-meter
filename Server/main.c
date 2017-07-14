@@ -161,7 +161,8 @@ void* tcpServer() {
                     printf("%s", buffer);
                     //if (buffer[0] == 'L')
                     if (buffer[0] == 'S') {
-                      pa_mainloop_quit(pa_ml, 0);
+                      if (run)
+                        pa_mainloop_quit(pa_ml, 0);
                       run = FALSE;
                       sleep(2);
                       write(fd, buffer, strlen(buffer));
@@ -189,16 +190,6 @@ int main()
 {
   pthread_t server;
   openComm();
-  /*
-  sleep(6);
-  write(fd, m1, strlen(m1));
-  sleep(2);
-  write(fd, m2, strlen(m2));
-  sleep(2);
-  write(fd, m3, strlen(m3));
-  sleep(2);
-  runPulse();
-  */
   pthread_create(&server, NULL, &tcpServer, NULL);
   for (;;) {
     if (run) runPulse();
