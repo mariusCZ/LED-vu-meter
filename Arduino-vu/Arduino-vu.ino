@@ -73,7 +73,6 @@ void loop() {
     }
     break;
     default:
-      //Serial.println("Shit's broken");
     break;
   }
   if (state == 1) {
