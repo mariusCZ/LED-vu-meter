@@ -74,7 +74,7 @@ static void stream_read_cb(pa_stream *s, size_t length, void *userdata) {
   float v;
   int k;
   if (pa_stream_peek(s, &data, &length) < 0) {
-    printf("%s", "Shit not reading");
+    printf("%s", "not reading");
     return;
   }
   if (!data) {
@@ -123,7 +123,7 @@ void runPulse() {
   // and continue
   
   while (pa_ready == 0) {
-    printf("%s", "Fix yo shit");
+    printf("%s", "Something wrong");
     pa_mainloop_iterate(pa_ml, 1, NULL);
   }
   
